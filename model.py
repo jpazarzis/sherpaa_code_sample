@@ -8,8 +8,21 @@ class Datastore(object):
     def add(self, item):
         self.items.append(item)
 
+        name_key = '{0} {1}'.format(item.last_name, item.first_name)
         if item.needs_to_assign_parent:
-            self.need_to_assign_parent[item.dependent_of] = item
+            if item.dependent_of not in self.need_to_assign_parent:
+                self.need_to_assign_parent[item.dependent_of] = [item]
+            else:
+                self.need_to_assign_parent[item.dependent_of].append(item)
+
+        elif name_key in self.need_to_assign_parent:
+
+            for i in self.need_to_assign_parent[name_key]:
+                i.self.dependent_of = item.itemid
+                i.needs_to_assign_parent = False
+            
+            del self.need_to_assign_parent[name_key]
+
 
         return item.itemid
 
