@@ -81,7 +81,7 @@ class User(object):
         self.itemid = uuid.uuid4().hex
 
         if self.state not in ['NY', 'NJ', 'CT', 'CA']:
-            self.item_type = "insurance only"
+            self.item_type = "insurance-only"
 
         dependent_of = dependent_of.strip()
 
@@ -89,6 +89,11 @@ class User(object):
             self.dependent_of_as_name = dependent_of
 
         self.hr_admin = hr_admin.strip() == 'x'
+
+        if self.hr_admin:
+            self.item_type += " HR User"
+
+
 
     @property
     def name(self):
