@@ -3,33 +3,44 @@ from collections import Counter
 
 class Datastore(object):
     items = []
-    need_to_assign_parent = {}
+    item_map = {}
+    need_to_assign_parent = []
+
+    def clear(self):
+        self.items = []
+        
+    def size(self):
+        return len(self.items)
+
+    def count_dependents(self):
+        return len([x for x in self.items if hasattr(x , 'dependent_of')])
 
     def add(self, item):
-        self.items.append(item)
-
-        name_key = '{0} {1}'.format(item.last_name, item.first_name)
-        if item.needs_to_assign_parent:
-            if item.dependent_of not in self.need_to_assign_parent:
-                self.need_to_assign_parent[item.dependent_of] = [item]
-            else:
-                self.need_to_assign_parent[item.dependent_of].append(item)
-
-        elif name_key in self.need_to_assign_parent:
-
-            for i in self.need_to_assign_parent[name_key]:
-                i.self.dependent_of = item.itemid
-                i.needs_to_assign_parent = False
-            
-            del self.need_to_assign_parent[name_key]
-
-
+        if hasattr(item, 'dependent_of_as_name'):
+            self.need_to_assign_parent.append(item)
+        else:
+            self.items.append(item)
+            self.item_map[item.name] = item.itemid
+        self._assign_parents()
         return item.itemid
+
+    def _assign_parents(self):
+        for item in self.need_to_assign_parent:
+            if item.dependent_of_as_name in self.item_map:
+                item.dependent_of = self.item_map[item.dependent_of_as_name]
+                del item.dependent_of_as_name
+                self.items.append(item)
+
+        self.need_to_assign_parent = [item for item in self.need_to_assign_parent 
+                                        if hasattr(item, 'dependent_of_as_name' )]
 
     def stats(self):
         types = Counter([i.item_type for i in self.items])
         types["item"] = sum(types.values())
         return types
+
+    def length(self):   
+        return len(self.items)
 
     def __iter__(self):
         return self.items.__iter__()
@@ -48,16 +59,19 @@ class User(object):
         self.state = state
         self.itemid = uuid.uuid4().hex
         self.insuranse = self.state not in ['NY', 'NJ', 'CT', 'CA']
-        self.dependent_of = dependent_of
-        self.needs_to_assign_parent = len(self.dependent_of) > 0
-        
+
+        dependent_of = dependent_of.strip()
+
+        if len(dependent_of) > 0:
+            self.dependent_of_as_name = dependent_of
 
     @property
     def name(self):
         return "{} {}".format(self.first_name, self.last_name)
 
     def __str__(self):
-        if self.dependent_of == '':
+        
+        if not hasattr(self, 'dependent_of'):
             return "<{}: {} -- employee at {}; allowed issuetypes: {}>".format(
                     self.item_type, self.name, self.employer, self.allowed_issuetypes)
         else:

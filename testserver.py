@@ -48,6 +48,21 @@ def data_stats():
         "There are {} {}s in the datastore.".format(count, item_type)
         for item_type, count in item_types.most_common()])
 
+@app.route("/reset", methods=["GET"])
+def reset():
+    store.clear()
+    return '{0}'.format(store.size())
+
+@app.route("/size", methods=["GET"])
+def size():
+    return '{0}'.format(store.size())
+
+@app.route("/count_dependents", methods=["GET"])
+def count_dependents():
+    return '{0}'.format(store.count_dependents())
+
+
+
 
 if __name__ == "__main__":
     import sys
