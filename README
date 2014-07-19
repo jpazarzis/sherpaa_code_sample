@@ -1,0 +1,105 @@
+Sherpaa has just signed a new client! FakeCo will be covering all of its employees with Sherpaa, so we need to import their employee roster into our web service. Your task is to write a program, in the language of your choice, to read in FakeCo's roster and make HTTP calls to a locally running Python web service to register those users. Optional additional tasks will require changes to both your program and the Python web service code.
+
+NOTE: If you have any questions, about these instructions or anything else related to the code test, don't waste too much time trying to figure them out yourself: don't hesitate to ask me at david@sherpaa.com or (314) 221-8042.
+
+
+*** GENERAL INSTRUCTIONS ***
+This task is separated into multiple parts; you should get the initial task up and running first, and then implement some of the additional tasks in whatever order you want. You should not expect to complete all of the available tasks within 3 hours--there are a lot of them on purpose to make sure there is more than 3 hours worth of stuff to do even though this test has not been very fine-tuned yet. Instead of rushing to complete as many as possible, you should focus on making your code clear, robust, and well-organized. (That said, the amount you accomplish will also be noted, and you should be sure to use the entire 3 hours productively.)
+
+Please use any libraries, 3rd-party or otherwise, as you see fit to write your code. (In particular, if you're using Python for the client program, I'd recommend using the Requests library over the included HTTP libs; but of course that's just a matter of personal taste and familiarity.) Please submit your code, in whatever form it's in, as close to the 3 hour mark as possible. If you need extra time to write up an explanation of how to run your code or install any required libraries, you can send that along afterwards at your leisure.
+
+Program as you would normally. Tests, unit or otherwise, are not required, but if you write them please include them with your submission. 
+
+The source files included in this test are:
+    <fakeco_roster.csv> -- Employee roster for FakeCo in CSV format
+    <testserver.py>     -- Route handlers for the web service
+    <model.py>          -- Simple in-memory datastore and model classes for web service
+
+
+*** RUNNING THE SERVER ***
+If you've already installed Flask as per the instructions in the email, you should be able to start up a local server by opening a command-line shell and running:
+
+    $ python testserver.py
+
+If it works, you should see output like:
+
+     * Running on http://127.0.0.1:5000/
+     * Restarting with reloader
+
+Incoming requests (and stacktraces in the event of uncaptured exceptions) will be printed to stdout:
+ 
+ 127.0.0.1 - - [18/Jul/2014 15:27:08] "GET /user_stats HTTP/1.1" 200 -
+
+The server will stay running (and responding to incoming requests on localhost port 5000) until you kill it e.g. with Ctrl-C. If port 5000 is already in use when you try to start the server, you'll get a stacktrace and an error:
+
+    socket.error: [Errno 48] Address already in use
+
+If that happens, you can start the server with an extra argument indicating an alternate port, e.g.:
+
+    $ python testserver.py 5001
+
+The server code resides in two files: testserver.py and model.py. You should briefly look them over to familiarize yourself with how they work. You will not need to modify the server code in order to complete the main task for this test, but several of the extra credit tasks do require you to modify code in testserver.py, model.py, or both.
+
+<testserver.py> creates a Flask application object and registers 3 routes on it via the Flask.route() decorator:
+  POST /add_user
+  GET  /users
+  GET  /data_stats
+
+You can test out the server by starting it in one terminal window, and then sending it a request to one of those routes. For instance, opening a second terminal and running:
+
+    $ curl localhost:5000/data_stats
+
+should return:
+
+    There are 0 total items in the datastore.
+
+Opening a browser window and fetching "localhost:5000/data_stats" should return the same message. (Replace "5000" with your alternate port if you provided one.)
+
+NOTE: function start_with_flask_server() in <testserver.py> starts up the default Flask web server with auto-reloading turned on; that means that whenever you change anything in <testserver.py> or <model.py>, the web server will automatically restart to incorporate your changes. Be aware that this will cause you to lose any users already registered in the in-memory datastore!
+
+
+*** INITIAL TASK ***
+FakeCo's roster is in CSV format in the file <fakeco_roster.csv>. Your task is to write a program that will read in their roster and make HTTP calls to the included server adding each person as a new Sherpaa user.
+
+You will POST to the /add_user route to accomplish this. The add_user() function in <testserver.py> and the User and Datastore classes in <model.py> should contain all the information you need to figure out how to do this successfully.
+
+Note that the User class requires an `employer` parameter despite it not being a column in the roster. You should take the company name as a command-line argument to your program and send it as part of the payload of each POST to /add_user.
+
+*** For the purposes of this task, you can ignore the "State, "Birthdate", "Dependent of", and "HR Admin" columns in <testco_roster.csv>. ***
+
+
+*** ADDITIONAL TASKS ***
+
+Again, you can complete these in any order. Don't expect to have time to get to all of them! (Having said that, Tasks #2 and #4 are more interesting when implemented together than when implemented separately, and will be graded accordingly.)
+
+1a) Add a birthdate attribute to the User class to store the values in the "Birthdate" column as python datetime.date objects. It's up to you to figure out how best to transmit the values from the script to the server.
+
+1b) Sherpaa does not provide pediatric care, so we can only register users who are over age 18 on the day of registration. Change your solution to weed those kids out instead of registering them on the server. (You can do this in your script or server-side, either way is fine.)
+
+
+2) Sherpaa doctors can only provide medical advice to users living in states where they are medically licensed. So far that includes New York, New Jersey, Connecticut, and California. The problem is, FakeCo has employees in a number of other states.
+
+Luckily, providing medical service is not all we do--our insurance experts can still help these employees out by answering questions about their insurance benefits, advocating on their behalf over faulty insurance bills, and sending them missing insurance cards. This means we need to register these employees as special "insurance-only" Sherpaa users.
+
+Modify both your script and testserver.py to support insurance-only users. The GET /data_stats call should return separate counts for regular and insurance-only users, and the GET /users call should indicate the type of an insurance-only user and show their allowed issuetypes as ["insurance"]. It's up to you to decide how to implement those changes.
+
+
+3a) Some of the people included in FakeCo's roster are not FakeCo employees, but dependents (spouses or children) who are covered under FakeCo's insurance and by Sherpaa. This is indicated by the "Dependent of" column in the roster.
+
+Add a dependent_of attribute to the User class. This will hold the itemid (NOT the name) of the person that User is a dependent of. Modify the output of GET /users to indicate when a user is a dependent--instead of "employee at <employer>", it should say "dependent at <employer>".
+
+3b) Modify the output of GET /users to instead say "dependent of <employee_name> at <employer>". Again, you should store an itemid in the dependent_of attribute, not the employee's name; you'll have to look up the name using the itemid. Feel free to modify the implementation of Datastore to make this efficient.
+
+3c) As it happens, FakeCo's roster only lists dependents after the people they are dependents of. Modify your solution to Task #3a to allow dependents to be listed in any order relative to the people they are dependents of.
+
+4a) Several of the people at FakeCo are HR Admins who have the ability to log into the HR portal functionality of Sherpaa and start issues of the "hr_admin" issuetype; they are indicated in the roster by an "x" in the "HR Admin" column. Modify the code so that these users have "hr_admin" added to their allowed_issuetypes as reported by the GET /users call, and their type as reported by the GET /users call indicated as "regular HR user" or "insurance-only HR user" (if you've implemented Task #2), accordingly.
+
+4b) Modify the output of the GET /data_stats call so that HR users are counted and reported independently of the regular/insurance-only user count. For instance, if there was a company with 70 regular users, 2 of whom were HR Admins; and 30 insurance-only users, 1 of whom was an HR Admin, GET /data_stats should return:
+
+ There are 100 items in the datastore.
+ There are 70 regular users in the datastore.
+ There are 30 insurance-only users in the datastore.
+ There are 3 HR admins in the datastore.
+
+As with Task #2, it's up to you to decide how to implement this functionality.
+
