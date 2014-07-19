@@ -43,10 +43,7 @@ def list_users():
 
 @app.route("/data_stats", methods=["GET"])
 def data_stats():
-    item_types = store.stats()
-    return "\n".join([
-        "There are {} {}s in the datastore.".format(count, item_type)
-        for item_type, count in item_types.most_common()])
+    return store.get_data_stats()
 
 @app.route("/reset", methods=["GET"])
 def reset():

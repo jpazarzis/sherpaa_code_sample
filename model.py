@@ -1,6 +1,12 @@
 import uuid
 from collections import Counter
 
+
+DATA_STATS_DESCRITION = '''There are {0} items in the datastore.  There are {1} regular users in the
+ datastore.  There are {2} insurance-only users in the datastore.  There are {3}
+ HR admins in the datastore.'''
+
+
 class Datastore(object):
     items = []
     item_map = {}
@@ -39,6 +45,21 @@ class Datastore(object):
         types["item"] = sum(types.values())
         return types
 
+    def get_data_stats(self):
+
+        count_regular_users = len([x for x in self.items if x.item_type == "regular user"])
+        count_insurance_only = len([x for x in self.items if x.item_type == "insurance only"])
+        count_hr_admins = len([x for x in self.items if x.hr_admin])
+
+        return DATA_STATS_DESCRITION.format(
+                    len(self.items), 
+                    count_regular_users,
+                    count_insurance_only,
+                    count_hr_admins
+                )
+
+
+
     def length(self):   
         return len(self.items)
 
@@ -50,7 +71,7 @@ class User(object):
     item_type = "regular user"
     allowed_issuetypes = ["sick", "hurt", "mental", "insurance"]
 
-    def __init__(self, first_name, last_name, employer, email, birthdate, state, dependent_of):
+    def __init__(self, first_name, last_name, employer, email, birthdate, state, dependent_of, hr_admin):
         self.first_name = first_name
         self.last_name = last_name
         self.employer = employer
@@ -58,12 +79,16 @@ class User(object):
         self.birthdate = birthdate
         self.state = state
         self.itemid = uuid.uuid4().hex
-        self.insuranse = self.state not in ['NY', 'NJ', 'CT', 'CA']
+
+        if self.state not in ['NY', 'NJ', 'CT', 'CA']:
+            self.item_type = "insurance only"
 
         dependent_of = dependent_of.strip()
 
         if len(dependent_of) > 0:
             self.dependent_of_as_name = dependent_of
+
+        self.hr_admin = hr_admin.strip() == 'x'
 
     @property
     def name(self):
