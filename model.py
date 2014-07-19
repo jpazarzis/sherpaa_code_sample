@@ -3,9 +3,14 @@ from collections import Counter
 
 class Datastore(object):
     items = []
+    need_to_assign_parent = {}
 
     def add(self, item):
         self.items.append(item)
+
+        if item.needs_to_assign_parent:
+            self.need_to_assign_parent[item.dependent_of] = item
+
         return item.itemid
 
     def stats(self):
@@ -31,6 +36,7 @@ class User(object):
         self.itemid = uuid.uuid4().hex
         self.insuranse = self.state not in ['NY', 'NJ', 'CT', 'CA']
         self.dependent_of = dependent_of
+        self.needs_to_assign_parent = len(self.dependent_of) > 0
         
 
     @property
