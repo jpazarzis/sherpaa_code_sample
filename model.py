@@ -57,5 +57,11 @@ class User(object):
         return "{} {}".format(self.first_name, self.last_name)
 
     def __str__(self):
-        return "<{}: {} -- employee at {}; allowed issuetypes: {}>".format(
-                self.item_type, self.name, self.employer, self.allowed_issuetypes)
+        if self.dependent_of == '':
+            return "<{}: {} -- employee at {}; allowed issuetypes: {}>".format(
+                    self.item_type, self.name, self.employer, self.allowed_issuetypes)
+        else:
+            return "<{}: {} -- dependent of {}>".format(
+                    self.item_type, self.name, self.dependent_of)
+        
+
